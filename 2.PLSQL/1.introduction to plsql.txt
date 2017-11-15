@@ -1,0 +1,72 @@
+LAB 1
+
+1.1)DECLARE
+	V_SAMPLE1 NUMBER(2);
+	V_SAMPLE2 CONSTANT NUMBER(2):=50;
+	V_SAMPLE3NUMBER(2) NOT NULL :=10;
+	V_SAMPLE4 NUMBER(2) :=50;
+	V_SAMPLE5 NUMBER(2) DEFAULT 25;
+
+1.2)DECLARE
+	VAR_NUM NUMBER:=5;
+	BEGIN
+	DECLARE
+	VAR_NUM NUMBER:=10;
+	BEGIN
+	DBMS_OUTPUT.PUT_LINE('VALUE FOR VAR_NUM:'||VAR_NUM);
+	END;
+	DBMS_OUTPUT.PUT_LINE('VALUE FOR VAR_NUM:'||VAR_NUM);
+	END;
+
+1.3)DECLARE
+	V_RECNAME EMPLOYEE%ROWTYPE;
+	BEGIN
+	SELECT * INTO V_RECNAME
+	FROM employee
+	WHERE EMP_ID=&EMP_ID;
+	DBMS_OUTPUT.PUT_LINE('THE EMPLOYEE NAME IS'||V_RECNAME.EMP_NAME);
+	DBMS_OUTPUT.PUT_LINE('THE SALARY IS'||V_RECNAME.SALARY);
+	END;
+	/
+
+1.4)DECLARE
+	V_RECNAME emp%rowtype;
+	v_dname department_master.dept_name%type;
+	BEGIN
+	SELECT * INTO V_RECNAME
+	FROM emp
+	WHERE ENAME='&V_ENAME';
+	SELECT DEPT_NAME INTO V_DNAME
+	FROM DEPARTMENT_MASTER
+	WHERE DEPT_CODE=V_RECNAME.DEPTNO;
+	DBMS_OUTPUT.PUT_LINE('THE EMP DETAILS ARE:'||V_RECNAME.EMPNO||' '||V_RECNAME.ENAME||' '||V_RECNAME.JOB||' '||V_RECNAME.MGR);
+	DBMS_OUTPUT.PUT_LINE('THE DEPARTMENT NAME IS:'||V_DNAME);
+	END;
+	/
+	SET SERVEROUTPUT ON
+
+
+1.5)declare
+	v_sal emp.sal%type;
+	v_ename emp.ename%type;
+	v_deptno emp.deptno%type:=&deptno;
+	cursor c_emp is 
+		select sal,ename into v_sal,v_ename
+	from emp
+	where deptno=v_deptno;
+     BEGIN
+	open c_emp;
+	loop
+	fetch c_emp into v_sal,v_ename;
+	exit when c_emp%notfound;
+	if((v_sal*0.3)>5000)
+	then
+ 	v_sal:=v_sal+5000;
+	else
+ 	v_sal:=v_sal+(v_sal*0.3);
+ 	end if;
+ 	dbms_output.put_line('salary of employee:'||v_ename||' is '||v_sal);
+  	end loop;
+      end;
+	/
+	set serveroutput on

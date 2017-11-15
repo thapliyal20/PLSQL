@@ -1,0 +1,495 @@
+%ROWTYPE
+********
+
+DECLARE
+staff Staff_Master %ROWTYPE;
+BEGIN
+SELECT * INTO staff
+FROM Staff_Master
+WHERE staff_code=&staff_code;
+DBMS_OUTPUT.PUT_LINE(staff.staff_name ||' '||staff.staff_sal);
+END;
+/
+
+DECLARE
+staff Staff_Master %ROWTYPE;
+BEGIN
+SELECT staff_name,staff_sal INTO 
+staff.staff_name, staff.staff_sal
+FROM Staff_Master
+WHERE staff_code=&staff_code;
+DBMS_OUTPUT.PUT_LINE(staff.staff_name ||' '||staff.staff_sal);
+END;
+/
+
+RECORD 
+******
+DECLARE 
+TYPE Employee IS RECORD
+(
+    v_staff_dept Department_Master.dept_name%TYPE,
+    v_staff_name Staff_Master.staff_name%TYPE,
+    v_staff_address Staff_Master.staff_address%TYPE
+);
+emp Employee;
+BEGIN
+    SELECT dept.dept_name, staff.staff_name,staff.staff_address
+    INTO emp.v_staff_dept,emp.v_staff_name,emp.v_staff_address
+    FROM Staff_Master staff, 
+    Department_Master dept
+    WHERE staff.dept_code=dept.dept_code
+    AND staff.staff_code=&staff_code;
+    DBMS_OUTPUT.PUT_LINE(emp.v_staff_dept||' '||emp.v_staff_name||' '||emp.v_staff_address);
+END;
+/
+
+DECLARE
+TYPE staff IS RECORD(
+	staff_rec Staff_Master%ROWTYPE
+);
+	v_staff staff;
+BEGIN
+	SELECT staff_name
+	INTO v_staff.staff_rec.staff_name
+	FROM Staff_Master
+	WHERE staff_code=100001;
+	DBMS_OUTPUT.PUT_LINE(v_staff.staff_rec.staff_name);
+END;
+/
+
+DECLARE
+	TYPE student IS RECORD(
+	n_student_code Student_Master.student_code%TYPE,
+	n_student_name Student_Master.student_name%TYPE,
+	n_marks NUMBER
+	);
+	student_rec student;
+BEGIN
+	SELECT master.student_code,student_name,
+	(subject1+subject2+subject3)
+	INTO student_rec.n_student_code,
+	student_rec.n_student_name,
+	student_rec.n_marks
+	FROM Student_Master master,Student_Marks marks
+	WHERE master.student_code=marks.student_code
+	AND 
+	master.student_code=1001
+	AND
+	marks.student_year=2010;
+	DBMS_OUTPUT.PUT_LINE(student_rec.n_student_name
+|| ' ' ||student_rec.n_marks);
+END;
+/
+
+
+IF
+**
+ DECLARE 
+TYPE Employee IS RECORD
+(
+    v_staff_dept Department_Master.dept_name%TYPE,
+    v_staff_name Staff_Master.staff_name%TYPE,
+    v_staff_address Staff_Master.staff_address%TYPE,
+    v_staff_salary Staff_Master.staff_sal%TYPE
+);
+emp Employee;
+v_grade VARCHAR2(10);
+BEGIN
+    SELECT dept.dept_name, staff.staff_name,staff.staff_address,staff.staff_sal
+    INTO emp.v_staff_dept,emp.v_staff_name,emp.v_staff_address,
+emp.v_staff_salary
+    FROM Staff_Master staff, 
+    Department_Master dept
+    WHERE staff.dept_code=dept.dept_code
+    AND staff.staff_code=&staff_code;
+    IF emp.v_staff_salary>=35000 THEN
+    v_grade:='Gamma';
+    ELSIF emp.v_staff_salary>=25000 THEN
+    v_grade:='Beta';
+    ELSE
+    v_grade:='Alpha'; 
+    END IF;    
+    DBMS_OUTPUT.PUT_LINE(v_grade);    
+END;
+
+
+Transaction Commands in PL/SQL
+******************************
+  BEGIN
+ INSERT INTO Sample values(1002);
+ INSERT INTO Sample values(2002);
+ SAVEPOINT A;
+ INSERT INTO Sample values(3002);
+ DELETE FROM Sample;
+ ROLLBACK TO A;
+ END;
+/
+
+CASE
+****
+DECLARE
+ TYPE Employee IS RECORD
+ (
+     v_staff_dept
+Department_Master.dept_name%TYPE,
+     v_staff_name
+Staff_Master.staff_name%TYPE,
+     v_staff_address
+Staff_Master.staff_address%TYPE,
+     v_staff_salary
+Staff_Master.staff_sal%TYPE
+ );
+ emp Employee;
+ v_grade VARCHAR2(10);
+ BEGIN
+SELECT dept.dept_name,
+staff.staff_name,staff.staff_address,
+staff.staff_sal
+INTO
+emp.v_staff_dept,emp.v_staff_name,
+emp.v_staff_address,emp.v_staff_salary
+     FROM Staff_Master staff,
+     Department_Master dept
+     WHERE staff.dept_code=dept.dept_code
+     AND staff.staff_code=&staff_code;
+     v_grade:=CASE
+     WHEN emp.v_staff_salary>=45000 THEN
+'DELTA'
+     WHEN emp.v_staff_salary>=35000 THEN
+'GAMMA'
+     WHEN emp.v_staff_salary>=25000 THEN
+'BETA'
+     ELSE 'ALPHA'
+     END;
+     DBMS_OUTPUT.PUT_LINE(v_grade);
+ END;
+
+IMPLICIT CURSOR
+***************
+DECLARE
+   v_name Test.name%TYPE;
+BEGIN
+   SELECT name INTO v_name FROM Test
+   WHERE id=101;
+      IF SQL%NOTFOUND THEN
+         DBMS_OUTPUT.PUT_LINE('Records are not available');
+      END IF;
+   INSERT INTO Test VALUES(105,'C');
+      IF SQL%FOUND THEN
+         DBMS_OUTPUT.PUT_LINE('Record updated');
+      END IF;
+   DBMS_OUTPUT.PUT_LINE(SQL%ROWCOUNT||' '||'Records inserted');
+END;
+
+
+CURSOR
+******
+
+DECLARE
+ TYPE Employee IS RECORD
+ (
+     v_staff_dept Department_Master.dept_name%TYPE,
+     v_staff_name Staff_Master.staff_name%TYPE,
+     v_staff_address Staff_Master.staff_address%TYPE,
+     v_staff_salary Staff_Master.staff_sal%TYPE
+ );
+ emp Employee;
+ CURSOR staff_cursor IS
+    SELECT dept.dept_name,           staff.staff_name,staff.staff_address,
+    staff.staff_sal
+    FROM Staff_Master staff,
+    Department_Master dept
+    WHERE staff.dept_code=dept.dept_code;
+    v_grade VARCHAR2(10);
+    v_counter NUMBER(1):=1;
+ BEGIN
+   OPEN staff_cursor;
+      LOOP
+         FETCH staff_cursor INTO                   emp.v_staff_dept,emp.v_staff_name,
+             emp.v_staff_address,emp.v_staff_salary; 
+    EXIT WHEN staff_cursor%NOTFOUND;
+            IF emp.v_staff_salary>=35000 THEN
+     	    v_grade:='Gamma';
+	    ELSIF emp.v_staff_salary>=25000 THEN
+	    v_grade:='Beta';
+	    ELSE
+	    v_grade:='Alpha';
+	    END IF;
+	    DBMS_OUTPUT.PUT_LINE(v_grade);
+	    
+     END LOOP;
+   CLOSE staff_cursor;
+ END;
+
+CURSOR WITH FOR LOOP
+********************
+
+ DECLARE
+ CURSOR staff_cursor IS
+    SELECT dept.dept_name,           staff.staff_name,staff.staff_address,
+    staff.staff_sal
+    FROM Staff_Masters staff,
+    Department_Masters dept
+    WHERE staff.dept_code=dept.dept_code;
+    v_grade VARCHAR2(10);
+   
+ BEGIN
+      FOR emp IN staff_cursor LOOP
+            IF emp.staff_sal>=35000 THEN
+     	    v_grade:='Gamma';
+	    ELSIF emp.staff_sal>=25000 THEN
+	    v_grade:='Beta';
+	    ELSE
+	    v_grade:='Alpha';
+	    END IF;
+	    DBMS_OUTPUT.PUT_LINE(emp.staff_name || v_grade);
+	    EXIT WHEN staff_cursor%NOTFOUND;
+     END LOOP;
+ END;
+
+CURSOR WITH PARAMETERS
+**********************
+
+DECLARE
+ TYPE Employee IS RECORD
+ (
+     v_staff_dept Department_Master.dept_name%TYPE,
+     v_staff_name Staff_Master.staff_name%TYPE,
+     v_staff_address Staff_Master.staff_address%TYPE,
+     v_staff_salary Staff_Master.staff_sal%TYPE
+ );
+ emp Employee;
+ CURSOR staff_cursor(n_dept_code NUMBER) IS
+    SELECT dept.dept_name,           staff.staff_name,staff.staff_address,
+    staff.staff_sal
+    FROM Staff_Master staff,
+    Department_Master dept
+    WHERE staff.dept_code=dept.dept_code
+    AND
+    staff.dept_code=n_dept_code;
+    v_grade VARCHAR2(10);
+    v_counter NUMBER(1):=1;
+ BEGIN
+         OPEN staff_cursor(&dept_code);
+      LOOP
+         FETCH staff_cursor INTO                   emp.v_staff_dept,emp.v_staff_name,
+         emp.v_staff_address,emp.v_staff_salary; 
+
+	FETCH staff_cursor INTO 
+       -- emp1;
+	   emp;
+         EXIT WHEN staff_cursor%NOTFOUND;
+            IF emp.v_staff_salary>=35000 THEN
+     	    v_grade:='Gamma';
+	    ELSIF emp.v_staff_salary>=25000 THEN
+	    v_grade:='Beta';
+	    ELSE
+	    v_grade:='Alpha';
+	    END IF;
+	    DBMS_OUTPUT.PUT_LINE(v_grade);
+     END LOOP;
+   CLOSE staff_cursor;
+ END;
+
+CURSOR WITH PARAMETER & FOR LOOP
+********************************
+ DECLARE
+  CURSOR staff_cursor(n_dept_code NUMBER) IS
+     SELECT dept.dept_name,           staff.staff_name,staff.staff_address,
+     staff.staff_sal
+     FROM Staff_Master staff,
+     Department_Master dept
+     WHERE staff.dept_code=dept.dept_code
+     AND staff.dept_code=n_dept_code;
+     v_grade VARCHAR2(10);
+     v_counter NUMBER(1):=1;
+  BEGIN
+       FOR emp IN staff_cursor(&dept_code) LOOP
+             IF emp.staff_sal>=35000 THEN
+                v_grade:='Gamma';
+        ELSIF emp.staff_sal>=25000 THEN
+        v_grade:='Beta';
+        ELSE
+        v_grade:='Alpha';
+        END IF;
+        DBMS_OUTPUT.PUT_LINE(v_grade);
+        EXIT WHEN staff_cursor%NOTFOUND;
+      END LOOP;
+  END;
+
+REF CURSOR
+**********
+
+	
+
+REF CURSOR (Dynamically referring to two different queries)
+***********************************************************
+
+DECLARE
+   TYPE ref_cursor IS REF CURSOR;
+   test_ref ref_cursor;
+   v_testrecord test%ROWTYPE;
+   v_samplerecord sample%ROWTYPE;
+BEGIN
+   OPEN test_ref FOR 
+   SELECT name, salary FROM test;
+      LOOP
+      FETCH test_ref INTO v_testrecord.name, v_testrecord.salary;
+      EXIT WHEN test_ref%NOTFOUND;
+      DBMS_OUTPUT.PUT_LINE(v_testrecord.name);
+      END LOOP;
+   CLOSE test_ref;
+   OPEN test_ref FOR 
+   SELECT * FROM Sample;
+      LOOP
+      FETCH test_ref INTO v_samplerecord;
+      EXIT WHEN test_ref%NOTFOUND;
+      DBMS_OUTPUT.PUT_LINE(v_samplerecord.id);
+      END LOOP;
+   CLOSE test_ref;
+END;
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE GET_NAME (i_n_id NUMBER, o_v_name out VARCHAR2)
+AS
+   v_id NUMBER;
+   v_name Test.name%TYPE;
+   INVALID_ID EXCEPTION;
+   BEGIN
+      IF i_n_id IS NULL OR i_n_id = 0 THEN
+         RAISE INVALID_ID;
+      END IF;
+      SELECT name INTO v_name
+      FROM Test
+      WHERE id=i_n_id;
+      o_v_name:=v_name;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+      RAISE_APPLICATION_ERROR(-20111,'Record does not exist');
+      WHEN INVALID_ID THEN
+      RAISE_APPLICATION_ERROR(-20112,'Invalid Id');
+      WHEN OTHERS THEN
+      RAISE_APPLICATION_ERROR(-20113,'Technical Problem');
+   END;
+
+Calling Procedure
+*****************
+
+DECLARE
+   
+   v_name Test.name%TYPE;
+   INVALID_ID EXCEPTION;
+   PRAGMA EXCEPTION_INIT(INVALID_ID,-20112);
+      
+BEGIN
+   Get_Name(101,v_name);--0,101,200
+   DBMS_OUTPUT.PUT_LINE(v_name);
+EXCEPTION
+   WHEN INVALID_ID THEN
+   DBMS_OUTPUT.PUT_LINE(SQLERRM);
+   WHEN OTHERS THEN
+   DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+
+
+IF SQL%NOTFOUND THEN
+      RAISE INVALID_ID;
+      END IF;
+
+
+
+Function returning a cursor
+***************************
+CREATE OR REPLACE PACKAGE types
+AS
+   TYPE ref_cursor IS REF CURSOR;
+END;
+
+
+CREATE OR REPLACE FUNCTION Get_Details
+   RETURN types.ref_cursor
+AS
+   emp_cursor types.ref_cursor;
+BEGIN
+   OPEN emp_cursor FOR
+      SELECT id, name FROM Test;
+   RETURN emp_cursor;
+END;
+
+SELECT Get_Details From Dual;
+
+
+
+
+
+
+EXERCISE for trainees
+*********************S
+
+DECLARE
+   TYPE student_record IS RECORD(
+   student_code NUMBER,
+   student_name VARCHAR2(20),
+   student_marks NUMBER
+   );
+   CURSOR student_cursor IS
+   SELECT student.student_code, student.student_name, 
+   marks.subject1+marks.subject2 as total 
+   FROM Student_Master student, Student_Marks marks
+   WHERE student.student_code=marks.student_code;
+   student_info student_record;
+BEGIN
+   OPEN student_cursor;
+   LOOP
+      FETCH student_cursor INTO student_info.student_code,
+      student_info.student_name,student_info.student_marks;
+      EXIT WHEN student_cursor%NOTFOUND;
+DBMS_OUTPUT.PUT_LINE(student_info.student_name||' '||
+      student_info.student_marks);
+   END LOOP;
+   CLOSE student_cursor;   
+      
+EXCEPTION
+   WHEN NO_DATA_FOUND THEN
+   DBMS_OUTPUT.PUT_LINE(SQLERRM);
+   WHEN OTHERS THEN
+   DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+CREATE OR REPLACE PACKAGE types
+AS
+   TYPE ref_cursor IS REF CURSOR;
+END;
+
+
+
+ CREATE OR REPLACE FUNCTION Get_Details
+    RETURN types.ref_cursor
+ AS
+    student_cursor types.ref_cursor;
+ BEGIN
+    OPEN student_cursor FOR
+       SELECT student_code, (subject1+subject2+subject3) AS Total
+       FROM Student_Marks;
+    RETURN student_cursor;
+    CLOSE student_cursor;
+ END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
